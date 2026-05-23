@@ -36,6 +36,55 @@ cd D:\codex-work\class-magazine-generator
 npm install
 ```
 
+## 给同事使用：纯前端在线版
+
+`web-local/` 是给同事使用的浏览器本地处理版本。它可以部署成一个普通静态网页，同事打开网址后选择多个 `.docx`，Mammoth.js 会在浏览器里直接解析作文，不会上传到服务器。
+
+本地开发预览：
+
+```powershell
+npm run web:dev
+```
+
+访问：
+
+```text
+http://127.0.0.1:5173/
+```
+
+构建静态网站：
+
+```powershell
+npm run web:build
+```
+
+生成目录：
+
+```text
+web-dist/
+```
+
+在线版能力：
+
+- 批量选择 `.docx`
+- 浏览器本地转换 HTML
+- 修改标题、作者、栏目
+- 勾选入选、匿名、隐私已审查
+- 在线杂志预览
+- A4 打印版预览
+- 导出项目 JSON，方便下次继续编辑
+- 导出单文件 HTML，方便发给别人查看最终杂志
+
+隐私边界：
+
+- `.docx` 文件不会上传。
+- 图片会以内嵌 data URL 的方式留在当前浏览器或导出的 HTML/JSON 中。
+- 发布给家长或同事前，仍需要老师人工确认隐私内容。
+
+GitHub Pages：
+
+仓库已包含 `.github/workflows/pages.yml`。推送到 `main` 后，GitHub Actions 会构建 `web-local/` 并发布 `web-dist/`。首次使用时，需要在 GitHub 仓库 Settings → Pages 中把 Source 设置为 GitHub Actions。
+
 ## 使用流程
 
 1. 把学生作文 `.docx` 放入 `input-docx/`。
