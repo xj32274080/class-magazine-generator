@@ -1,0 +1,351 @@
+:root {
+  color-scheme: light;
+  --ink: #1f2933;
+  --muted: #667085;
+  --line: #d8dee8;
+  --paper: #fbfaf7;
+  --surface: #ffffff;
+  --accent: #0f766e;
+  --accent-dark: #115e59;
+  --warm: #b45309;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: "Noto Serif SC", "Songti SC", SimSun, serif;
+  line-height: 1.7;
+}
+
+a {
+  color: inherit;
+}
+
+.cover {
+  min-height: 78vh;
+  display: grid;
+  align-items: center;
+  border-bottom: 1px solid var(--line);
+  background:
+    linear-gradient(90deg, rgba(251,250,247,.92), rgba(251,250,247,.76)),
+    url("/assets/cover-writing.svg") center / cover;
+}
+
+.cover__inner {
+  width: min(1080px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 72px 0 96px;
+}
+
+.issue,
+.article-card__meta,
+.byline,
+.essay__header p {
+  color: var(--muted);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.cover h1 {
+  margin: 0;
+  max-width: 780px;
+  font-size: clamp(3rem, 8vw, 6.8rem);
+  line-height: 1;
+}
+
+.cover__summary {
+  max-width: 620px;
+  font-size: 1.2rem;
+}
+
+.cover__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 28px;
+}
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 18px;
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: white;
+  text-decoration: none;
+  font-family: system-ui, sans-serif;
+}
+
+.button--ghost {
+  background: transparent;
+  color: var(--accent-dark);
+}
+
+.page,
+.reader {
+  width: min(1120px, calc(100% - 32px));
+  margin: 0 auto;
+}
+
+.column-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 24px 0;
+  font-family: system-ui, sans-serif;
+}
+
+.column-nav a {
+  border: 1px solid var(--line);
+  background: var(--surface);
+  padding: 8px 12px;
+  text-decoration: none;
+}
+
+.column-nav span {
+  color: var(--warm);
+}
+
+.section {
+  padding: 28px 0 56px;
+}
+
+.section__heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  border-bottom: 2px solid var(--ink);
+  margin-bottom: 18px;
+}
+
+.section__heading h2 {
+  margin: 0 0 8px;
+  font-size: 2rem;
+}
+
+.section__heading p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.article-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
+}
+
+.article-card {
+  border: 1px solid var(--line);
+  background: var(--surface);
+  display: grid;
+  grid-template-rows: auto 1fr;
+}
+
+.article-card img {
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  object-fit: cover;
+  border-bottom: 1px solid var(--line);
+}
+
+.article-card div {
+  padding: 16px;
+}
+
+.article-card h3 {
+  margin: 4px 0 8px;
+  font-size: 1.25rem;
+}
+
+.article-card p {
+  margin: 0;
+}
+
+.reader {
+  padding: 32px 0 80px;
+}
+
+.back-link {
+  display: inline-block;
+  margin-bottom: 20px;
+  color: var(--accent-dark);
+  font-family: system-ui, sans-serif;
+}
+
+.essay {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  padding: clamp(24px, 5vw, 56px);
+}
+
+.essay__header {
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 28px;
+  padding-bottom: 20px;
+  text-align: center;
+}
+
+.essay__header h1 {
+  margin: 8px 0;
+  font-size: clamp(2rem, 6vw, 4rem);
+  line-height: 1.1;
+}
+
+.essay__body {
+  max-width: 760px;
+  margin: 0 auto;
+  font-size: 1.08rem;
+}
+
+.essay__body img {
+  max-width: 100%;
+  height: auto;
+}
+
+.newspaper {
+  background: white;
+  color: #111;
+  font-family: "Noto Serif SC", "Songti SC", SimSun, serif;
+}
+
+.masthead {
+  column-span: all;
+  text-align: center;
+  border-bottom: 3px double #111;
+  margin-bottom: 14pt;
+  padding-bottom: 9pt;
+}
+
+.masthead p,
+.masthead div,
+.byline {
+  font-family: "Microsoft YaHei", system-ui, sans-serif;
+}
+
+.masthead p {
+  margin: 0;
+  font-size: 8pt;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.masthead h1 {
+  margin: 1pt 0 2pt;
+  font-size: 30pt;
+  line-height: 1.1;
+}
+
+.masthead div {
+  font-size: 9pt;
+}
+
+.print-section {
+  margin-bottom: 10pt;
+}
+
+.print-section h2 {
+  break-after: avoid;
+  margin: 0 0 7pt;
+  border-top: 1.5pt solid #111;
+  border-bottom: .75pt solid #111;
+  padding: 3pt 0 3.5pt;
+  font-size: 13pt;
+  line-height: 1.15;
+}
+
+.print-section h2 span {
+  display: inline-block;
+  background: #111;
+  color: white;
+  padding: 1pt 6pt 1.5pt;
+}
+
+.print-article {
+  margin-bottom: 10pt;
+}
+
+.print-article h3 {
+  break-after: avoid;
+  margin: 0 0 1pt;
+  font-size: 12pt;
+  line-height: 1.24;
+}
+
+.print-article p {
+  margin: 0 0 4pt;
+}
+
+.print-article .byline {
+  break-after: avoid;
+  color: #555;
+  font-size: 8.5pt;
+  line-height: 1.35;
+}
+
+.print-article__body p {
+  margin: 0;
+  text-indent: 2em;
+  orphans: 2;
+  widows: 2;
+}
+
+.print-article img {
+  max-width: 100%;
+  height: auto;
+}
+
+@page {
+  size: A4;
+  margin: 16mm 14mm 18mm;
+  @bottom-center {
+    content: "第 " counter(page) " 页";
+    font-size: 9pt;
+  }
+}
+
+@media print {
+  body {
+    background: white;
+  }
+
+  .newspaper {
+    column-count: 2;
+    column-gap: 8mm;
+    column-rule: .25pt solid #ddd;
+    font-size: 9.8pt;
+    line-height: 1.52;
+  }
+}
+
+@media (min-width: 980px) {
+  .newspaper {
+    width: 210mm;
+    min-height: 297mm;
+    margin: 24px auto;
+    padding: 16mm 14mm;
+    column-count: 2;
+    column-gap: 8mm;
+    column-rule: .25pt solid #ddd;
+    font-size: 9.8pt;
+    line-height: 1.52;
+    box-shadow: 0 16px 60px rgba(31, 41, 51, .16);
+  }
+}
+
+@media (max-width: 640px) {
+  .cover {
+    min-height: 70vh;
+  }
+
+  .section__heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}

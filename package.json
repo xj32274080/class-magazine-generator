@@ -1,0 +1,22 @@
+{
+  "name": "class-magazine-generator",
+  "version": "0.1.0",
+  "private": true,
+  "description": "本地班级作文报纸 / 在线杂志生成器",
+  "scripts": {
+    "import": "node scripts/import-docx.mjs",
+    "admin": "node scripts/serve-admin.mjs",
+    "build": "eleventy",
+    "dev": "eleventy --serve --watch --port=8080",
+    "clean": "node scripts/clean.mjs"
+  },
+  "dependencies": {
+    "@11ty/eleventy": "^3.1.2",
+    "express": "^5.1.0",
+    "jsdom": "^26.1.0",
+    "mammoth": "^1.9.1",
+    "pagedjs": "^0.4.3",
+    "slugify": "^1.6.6"
+  },
+  "devDependencies": {}
+}

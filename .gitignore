@@ -1,0 +1,8 @@
+node_modules/
+dist/
+.eleventy-cache/
+data/articles.json
+data/media/
+input-docx/*
+!input-docx/.gitkeep
+*.log

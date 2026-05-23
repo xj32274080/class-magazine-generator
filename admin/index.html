@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>作文杂志本地管理</title>
+    <link rel="icon" href="data:,">
+    <link rel="stylesheet" href="/admin/admin.css">
+  </head>
+  <body>
+    <header class="topbar">
+      <div>
+        <p>Local Magazine Desk</p>
+        <h1>作文杂志本地管理</h1>
+      </div>
+      <div class="actions">
+        <button id="saveButton" type="button">保存修改</button>
+        <button id="buildButton" type="button">生成网站</button>
+      </div>
+    </header>
+
+    <main>
+      <section class="notice">
+        <strong>发布前确认：</strong>
+        只有同时勾选“入选”和“隐私已审查”的作文会出现在在线杂志与打印版中。请重点检查学生姓名、家庭信息、同学矛盾、联系方式和照片。
+      </section>
+
+      <section class="toolbar">
+        <input id="searchInput" type="search" placeholder="搜索标题、作者、栏目">
+        <select id="columnFilter">
+          <option value="">全部栏目</option>
+        </select>
+        <label><input id="selectedOnly" type="checkbox"> 只看入选</label>
+      </section>
+
+      <section id="articleList" class="article-list" aria-live="polite"></section>
+      <pre id="statusBox" class="status" hidden></pre>
+    </main>
+
+    <template id="articleTemplate">
+      <article class="article-editor">
+        <div class="article-editor__main">
+          <label>标题<input data-field="title"></label>
+          <label>作者<input data-field="author"></label>
+          <label>栏目<select data-field="column"></select></label>
+          <div class="checks">
+            <label><input data-field="selected" type="checkbox"> 入选</label>
+            <label><input data-field="anonymous" type="checkbox"> 匿名发布</label>
+            <label><input data-field="privacyReview" type="checkbox"> 隐私已审查</label>
+          </div>
+          <details>
+            <summary>预览正文</summary>
+            <div class="preview"></div>
+          </details>
+        </div>
+      </article>
+    </template>
+
+    <script src="/admin/admin.js" type="module"></script>
+  </body>
+</html>

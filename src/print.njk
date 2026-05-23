@@ -1,0 +1,29 @@
+---
+layout: base.njk
+title: A4打印报纸
+permalink: /print/
+---
+<main class="newspaper">
+  <header class="masthead">
+    <p>Class Writing Gazette</p>
+    <h1>班级作文报</h1>
+    <div>本地生成 · 已审查入选作品</div>
+  </header>
+
+  {% for column in columns %}
+    {% set columnArticles = publishedArticles | whereColumn(column) %}
+    {% if columnArticles.length > 0 %}
+      <section class="print-section">
+        <h2><span>{{ column }}</span></h2>
+        {% for article in columnArticles %}
+          <article class="print-article">
+            <h3>{{ article.title }}</h3>
+            <p class="byline">{{ article | displayAuthor }}</p>
+            <div class="print-article__body">{{ article.html | safe }}</div>
+          </article>
+        {% endfor %}
+      </section>
+    {% endif %}
+  {% endfor %}
+</main>
+<script src="/assets/vendor/paged.polyfill.js"></script>

@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1000" role="img" aria-label="作文纸、钢笔和排版草稿">
+  <rect width="1600" height="1000" fill="#f3efe4"/>
+  <rect x="120" y="90" width="620" height="800" fill="#fffdf8" stroke="#d8cdb9" stroke-width="4"/>
+  <rect x="860" y="130" width="540" height="700" fill="#ffffff" stroke="#d8cdb9" stroke-width="4"/>
+  <g fill="none" stroke="#cbbfa9" stroke-width="3">
+    <path d="M170 180H690M170 245H690M170 310H690M170 375H690M170 440H690M170 505H690M170 570H690M170 635H690M170 700H690M170 765H690"/>
+    <path d="M920 250H1340M920 315H1340M920 380H1340M920 445H1340M920 510H1340M920 575H1340M920 640H1340"/>
+  </g>
+  <g fill="#d97706" opacity=".18">
+    <rect x="170" y="125" width="280" height="34"/>
+    <rect x="920" y="175" width="230" height="34"/>
+  </g>
+  <path d="M1040 760l320-420 54 42-320 420-88 42z" fill="#0f766e"/>
+  <path d="M1094 802l-88 42 22-96z" fill="#b45309"/>
+  <path d="M1358 340l44-58 54 42-44 58z" fill="#18212f"/>
+  <g fill="#18212f" opacity=".14">
+    <circle cx="775" cy="240" r="70"/>
+    <circle cx="805" cy="655" r="44"/>
+    <circle cx="1455" cy="760" r="66"/>
+  </g>
+</svg>

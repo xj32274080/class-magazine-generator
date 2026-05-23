@@ -1,0 +1,52 @@
+---
+layout: base.njk
+title: 班级作文在线杂志
+---
+<header class="cover">
+  <div class="cover__inner">
+    <p class="issue">本地生成 · 老师审定版</p>
+    <h1>班级作文在线杂志</h1>
+    <p class="cover__summary">收录 {{ publishedArticles.length }} 篇已审查作文，适合手机、电脑阅读，也可生成 A4 打印报纸。</p>
+    <div class="cover__actions">
+      <a class="button" href="#columns">浏览栏目</a>
+      <a class="button button--ghost" href="/print/">打印版</a>
+    </div>
+  </div>
+</header>
+
+<main id="columns" class="page">
+  <nav class="column-nav" aria-label="栏目导航">
+    {% for column in columns %}
+      {% set count = (publishedArticles | whereColumn(column)).length %}
+      {% if count > 0 %}
+        <a href="#{{ column }}">{{ column }} <span>{{ count }}</span></a>
+      {% endif %}
+    {% endfor %}
+  </nav>
+
+  {% for column in columns %}
+    {% set columnArticles = publishedArticles | whereColumn(column) %}
+    {% if columnArticles.length > 0 %}
+      <section class="section" id="{{ column }}">
+        <div class="section__heading">
+          <h2>{{ column }}</h2>
+          <p>{{ columnArticles.length }} 篇</p>
+        </div>
+        <div class="article-grid">
+          {% for article in columnArticles %}
+            <article class="article-card">
+              {% if article.images and article.images.length %}
+                <img src="{{ article.images[0] }}" alt="">
+              {% endif %}
+              <div>
+                <p class="article-card__meta">{{ article | displayAuthor }} · {{ article | readingMinutes }} 分钟</p>
+                <h3><a href="/articles/{{ article.id }}/">{{ article.title }}</a></h3>
+                <p>{{ article.html | striptags | truncate(90) }}</p>
+              </div>
+            </article>
+          {% endfor %}
+        </div>
+      </section>
+    {% endif %}
+  {% endfor %}
+</main>

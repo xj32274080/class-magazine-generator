@@ -1,0 +1,23 @@
+---
+layout: base.njk
+pagination:
+  data: publishedArticles
+  size: 1
+  alias: article
+permalink: "/articles/{{ article.id }}/"
+eleventyComputed:
+  title: "{{ article.title }}"
+---
+<main class="reader">
+  <a class="back-link" href="/">返回杂志首页</a>
+  <article class="essay">
+    <header class="essay__header">
+      <p>{{ article.column }}</p>
+      <h1>{{ article.title }}</h1>
+      <div>{{ article | displayAuthor }}</div>
+    </header>
+    <div class="essay__body">
+      {{ article.html | safe }}
+    </div>
+  </article>
+</main>
