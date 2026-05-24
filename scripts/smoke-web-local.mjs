@@ -38,5 +38,6 @@ assert.doesNotMatch(html, />管理</);
 assert.doesNotMatch(html, /杂志预览/);
 assert.doesNotMatch(html, /打印版/);
 assert.match(html, /data-print-container/);
+assert.doesNotMatch(html, /导出为 PDF/);
 
 console.log("web-local smoke test passed");
