@@ -1,15 +1,19 @@
 :root {
   color-scheme: light;
-  --ink: #17202f;
-  --muted: #667085;
-  --line: #d9e0ea;
-  --page: #f6f4ef;
-  --surface: #ffffff;
+  --ink: #18202d;
+  --muted: #6b7280;
+  --line: #d8d0c2;
+  --page: #f5f0e6;
+  --surface: #fffdf8;
   --accent: #0f766e;
+  --accent-dark: #115e59;
+  --seal: #9a3412;
   --danger: #b42318;
 }
 
-* { box-sizing: border-box; }
+* {
+  box-sizing: border-box;
+}
 
 body {
   margin: 0;
@@ -18,7 +22,12 @@ body {
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
-button, input, select { font: inherit; }
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
 
 button {
   min-height: 40px;
@@ -32,7 +41,8 @@ button {
   cursor: pointer;
 }
 
-button[aria-current="page"], .ghost-button {
+button[aria-current="page"],
+.ghost-button {
   background: #fff;
   color: var(--accent);
 }
@@ -56,35 +66,98 @@ button[aria-current="page"], .ghost-button {
 .app-header {
   position: sticky;
   top: 0;
-  z-index: 3;
+  z-index: 10;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
   padding: 16px clamp(16px, 4vw, 40px);
   border-bottom: 1px solid var(--line);
-  background: rgba(255, 255, 255, .96);
+  background: rgba(255, 253, 248, .97);
 }
 
-.app-header p, .app-header h1 { margin: 0; }
-.app-header p { color: var(--muted); font-size: .82rem; }
-.app-header h1 { font-size: 1.35rem; }
-.app-header nav, .toolbar { display: flex; flex-wrap: wrap; gap: 10px; }
+.app-header p,
+.app-header h1 {
+  margin: 0;
+}
 
-.shell {
+.app-header p {
+  color: var(--muted);
+  font-size: .88rem;
+}
+
+.app-header h1 {
+  font-size: 1.35rem;
+}
+
+.app-header nav,
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.app-shell {
   width: min(1180px, calc(100% - 32px));
   margin: 24px auto 72px;
 }
 
-.privacy-banner, .status, .empty, .editor-card, .review-summary > div {
+.privacy-banner,
+.status,
+.empty,
+.editor-card,
+.settings-panel,
+.review-summary > div {
   border: 1px solid var(--line);
   background: var(--surface);
 }
 
-.privacy-banner { padding: 14px 16px; margin-bottom: 14px; }
-.toolbar { margin-bottom: 12px; }
-.status { color: var(--muted); padding: 10px 12px; margin: 0 0 16px; }
-.empty { padding: 32px; text-align: center; }
+.privacy-banner {
+  padding: 14px 16px;
+  margin-bottom: 14px;
+}
+
+.toolbar {
+  margin-bottom: 12px;
+}
+
+.status {
+  color: var(--muted);
+  padding: 10px 12px;
+  margin: 0 0 16px;
+}
+
+.empty,
+.publication-empty {
+  padding: 32px;
+  text-align: center;
+}
+
+.settings-panel {
+  padding: 18px;
+  margin-bottom: 16px;
+}
+
+.settings-panel header span {
+  color: var(--muted);
+  font-size: .78rem;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.settings-panel h2 {
+  margin: 2px 0 16px;
+}
+
+.settings-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+.settings-wide {
+  grid-column: 1 / -1;
+}
 
 .review-summary {
   display: grid;
@@ -93,33 +166,73 @@ button[aria-current="page"], .ghost-button {
   margin-bottom: 14px;
 }
 
-.review-summary div { padding: 16px; }
-.review-summary strong { display: block; font-size: 2rem; }
-.review-summary span { color: var(--muted); }
+.review-summary div {
+  padding: 16px;
+}
 
-.editor-list { display: grid; gap: 12px; }
-.editor-card { padding: 16px; }
+.review-summary strong {
+  display: block;
+  font-size: 2rem;
+}
 
-.editor-fields {
+.review-summary span {
+  color: var(--muted);
+}
+
+.editor-list {
   display: grid;
-  grid-template-columns: minmax(180px, 1.4fr) minmax(140px, .8fr) 160px;
   gap: 12px;
 }
 
-label { display: grid; gap: 6px; color: var(--muted); font-size: .88rem; }
+.editor-card {
+  padding: 16px;
+}
 
-input, select {
+.editor-fields {
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) minmax(140px, .7fr) minmax(140px, .7fr) 160px;
+  gap: 12px;
+}
+
+label {
+  display: grid;
+  gap: 6px;
+  color: var(--muted);
+  font-size: .88rem;
+}
+
+input,
+select,
+textarea {
   width: 100%;
   min-height: 40px;
   border: 1px solid var(--line);
   background: white;
   color: var(--ink);
-  padding: 0 10px;
+  padding: 8px 10px;
 }
 
-.checks { display: flex; flex-wrap: wrap; gap: 18px; margin: 12px 0; }
-.checks label { display: inline-flex; align-items: center; color: var(--ink); }
-.checks input { width: auto; min-height: auto; }
+.excerpt-field {
+  margin-top: 12px;
+}
+
+.checks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+  margin: 12px 0;
+}
+
+.checks label {
+  display: inline-flex;
+  align-items: center;
+  color: var(--ink);
+}
+
+.checks input {
+  width: auto;
+  min-height: auto;
+}
 
 .essay-preview {
   max-width: 760px;
@@ -128,65 +241,311 @@ input, select {
   font-family: "Noto Serif SC", "Songti SC", SimSun, serif;
 }
 
-.essay-preview img { max-width: 100%; }
-
-.cover {
-  min-height: 52vh;
-  display: grid;
-  align-items: center;
-  margin-bottom: 18px;
-  border: 1px solid var(--line);
-  background:
-    linear-gradient(90deg, rgba(246,244,239,.95), rgba(246,244,239,.78)),
-    radial-gradient(circle at 78% 30%, #f2d3a4 0 12%, transparent 13%),
-    linear-gradient(135deg, #fffdf8, #dce9e7);
+.essay-preview img {
+  max-width: 100%;
 }
 
-.cover > div { padding: clamp(28px, 6vw, 72px); }
-.cover p, .cover h2 { margin: 0; }
-
-.cover h2 {
-  max-width: 760px;
+.publication {
   font-family: "Noto Serif SC", "Songti SC", SimSun, serif;
-  font-size: clamp(2.6rem, 8vw, 6rem);
-  line-height: 1.05;
 }
 
-.column-nav { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 24px; }
-.column-nav a { border: 1px solid var(--line); background: white; color: var(--ink); padding: 8px 12px; text-decoration: none; }
+.publication--magazine {
+  background:
+    linear-gradient(rgba(255, 253, 248, .9), rgba(255, 253, 248, .9)),
+    repeating-linear-gradient(0deg, transparent 0 31px, rgba(154, 52, 18, .08) 32px);
+  min-height: 100vh;
+  padding-bottom: 64px;
+}
 
-.mag-section { margin-bottom: 42px; }
-.mag-section header { display: flex; justify-content: space-between; align-items: baseline; border-bottom: 2px solid var(--ink); margin-bottom: 16px; }
-.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
-.mag-card { border: 1px solid var(--line); background: white; padding: 16px; }
-.mag-card img { width: 100%; aspect-ratio: 16 / 10; object-fit: cover; margin: -16px -16px 12px; max-width: calc(100% + 32px); }
-.mag-card p { color: var(--muted); margin: 0; }
-.mag-card h3 { margin: 4px 0 8px; }
+.magazine-cover {
+  min-height: 82vh;
+  display: grid;
+  align-content: center;
+  padding: clamp(32px, 7vw, 96px);
+  border-bottom: 1px solid var(--line);
+  background:
+    radial-gradient(circle at 82% 26%, rgba(154, 52, 18, .12) 0 12%, transparent 13%),
+    linear-gradient(135deg, #fffdf8, #efe4d0);
+}
 
-.print-actions { margin-bottom: 14px; }
-.newspaper { background: white; color: #111; font-family: "Noto Serif SC", "Songti SC", SimSun, serif; }
-.masthead { column-span: all; text-align: center; border-bottom: 3px double #111; margin-bottom: 14pt; padding-bottom: 9pt; }
-.masthead p, .masthead div, .byline { font-family: "Microsoft YaHei", system-ui, sans-serif; }
-.masthead p { margin: 0; font-size: 8pt; letter-spacing: .08em; text-transform: uppercase; }
-.masthead h1 { margin: 1pt 0 2pt; font-size: 30pt; line-height: 1.1; }
-.masthead div { font-size: 9pt; }
-.print-section { margin-bottom: 10pt; }
-.print-section h2 { break-after: avoid; margin: 0 0 7pt; border-top: 1.5pt solid #111; border-bottom: .75pt solid #111; padding: 3pt 0 3.5pt; font-size: 13pt; line-height: 1.15; }
-.print-section h2 span { display: inline-block; background: #111; color: white; padding: 1pt 6pt 1.5pt; }
-.print-article { margin-bottom: 10pt; }
-.print-article h3 { break-after: avoid; margin: 0 0 1pt; font-size: 12pt; line-height: 1.24; }
-.print-article p { margin: 0 0 4pt; }
-.print-article .byline { break-after: avoid; color: #555; font-size: 8.5pt; line-height: 1.35; }
-.print-article__body p { margin: 0; text-indent: 2em; orphans: 2; widows: 2; }
-.print-article img { max-width: 100%; height: auto; }
+.magazine-cover__mark {
+  color: var(--seal);
+  font-family: system-ui, sans-serif;
+  font-size: .82rem;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+
+.magazine-cover h1 {
+  max-width: 900px;
+  margin: 12px 0;
+  font-size: clamp(3rem, 10vw, 7.5rem);
+  line-height: 1.02;
+  font-weight: 800;
+}
+
+.magazine-cover__theme {
+  margin: 0 0 10px;
+  font-size: clamp(1.2rem, 3vw, 2rem);
+  color: var(--accent-dark);
+}
+
+.magazine-cover__meta,
+.magazine-cover__issue {
+  margin: 0;
+  color: var(--muted);
+  font-family: system-ui, sans-serif;
+}
+
+.editor-note {
+  max-width: 720px;
+  margin-top: 28px;
+  padding-left: 18px;
+  border-left: 3px solid var(--seal);
+  font-size: 1.05rem;
+  line-height: 1.8;
+}
+
+.magazine-toc {
+  width: min(1080px, calc(100% - 32px));
+  margin: 26px auto;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.magazine-toc a {
+  border: 1px solid var(--line);
+  background: #fffdf8;
+  color: var(--ink);
+  padding: 8px 14px;
+  text-decoration: none;
+}
+
+.magazine-section {
+  width: min(1080px, calc(100% - 32px));
+  margin: 0 auto 48px;
+}
+
+.magazine-section header {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  border-bottom: 2px solid var(--ink);
+  margin-bottom: 18px;
+}
+
+.magazine-section header span {
+  color: var(--seal);
+  font-family: system-ui, sans-serif;
+  font-size: .76rem;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+
+.magazine-section h2 {
+  margin: 0 0 8px;
+  font-size: 2rem;
+}
+
+.magazine-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+}
+
+.magazine-card {
+  min-height: 230px;
+  border: 1px solid var(--line);
+  background: #fffdf8;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.column-stamp {
+  align-self: flex-start;
+  border: 1px solid rgba(154, 52, 18, .35);
+  color: var(--seal);
+  padding: 2px 7px;
+  font-family: system-ui, sans-serif;
+  font-size: .78rem;
+}
+
+.magazine-card h3 {
+  margin: 4px 0 0;
+  font-size: 1.35rem;
+}
+
+.magazine-card__author {
+  margin: 0;
+  color: var(--muted);
+  font-family: system-ui, sans-serif;
+}
+
+.magazine-card p {
+  margin: 0;
+  line-height: 1.7;
+}
+
+.magazine-card a,
+.reader-back {
+  margin-top: auto;
+  color: var(--accent-dark);
+  font-family: system-ui, sans-serif;
+}
+
+.article-reader {
+  min-height: 100vh;
+  padding: clamp(20px, 5vw, 64px);
+  background: #f8f3ea;
+}
+
+.article-reader article {
+  max-width: 860px;
+  margin: 20px auto;
+  padding: clamp(24px, 5vw, 56px);
+  border: 1px solid var(--line);
+  background: #fffdf8;
+}
+
+.article-reader header {
+  text-align: center;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 22px;
+  margin-bottom: 28px;
+}
+
+.article-reader header p,
+.article-reader header div {
+  margin: 0;
+  color: var(--muted);
+  font-family: system-ui, sans-serif;
+}
+
+.article-reader h1 {
+  margin: 8px 0;
+  font-size: clamp(2rem, 6vw, 4.5rem);
+  line-height: 1.1;
+}
+
+.article-reader__body {
+  font-size: 1.08rem;
+  line-height: 1.85;
+}
+
+.article-reader__body img {
+  max-width: 100%;
+}
+
+.newspaper {
+  background: white;
+  color: #111;
+}
+
+.newspaper-masthead {
+  column-span: all;
+  text-align: center;
+  border-bottom: 3px double #111;
+  margin-bottom: 14pt;
+  padding-bottom: 9pt;
+}
+
+.newspaper-masthead p,
+.newspaper-masthead div,
+.byline {
+  font-family: "Microsoft YaHei", system-ui, sans-serif;
+}
+
+.newspaper-masthead p {
+  margin: 0;
+  font-size: 8pt;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.newspaper-masthead h1 {
+  margin: 1pt 0 2pt;
+  font-size: 30pt;
+  line-height: 1.1;
+}
+
+.newspaper-theme {
+  font-size: 12pt;
+  font-weight: 700;
+}
+
+.newspaper-meta {
+  font-size: 9pt;
+}
+
+.print-section {
+  margin-bottom: 10pt;
+}
+
+.print-section h2 {
+  break-after: avoid;
+  margin: 0 0 7pt;
+  border-top: 1.5pt solid #111;
+  border-bottom: .75pt solid #111;
+  padding: 3pt 0 3.5pt;
+  font-size: 13pt;
+  line-height: 1.15;
+}
+
+.print-section h2 span {
+  display: inline-block;
+  background: #111;
+  color: white;
+  padding: 1pt 6pt 1.5pt;
+}
+
+.print-article {
+  margin-bottom: 10pt;
+  break-inside: auto;
+}
+
+.print-article h3 {
+  break-after: avoid;
+  margin: 0 0 1pt;
+  font-size: 12pt;
+  line-height: 1.24;
+}
+
+.print-article p {
+  margin: 0 0 4pt;
+}
+
+.print-article .byline {
+  break-after: avoid;
+  color: #555;
+  font-size: 8.5pt;
+  line-height: 1.35;
+}
+
+.print-article__body p {
+  margin: 0;
+  text-indent: 2em;
+  orphans: 2;
+  widows: 2;
+}
+
+.print-article img {
+  max-width: 100%;
+  height: auto;
+}
 
 @page {
   size: A4;
   margin: 16mm 14mm 18mm;
-  @bottom-center { content: "第 " counter(page) " 页"; font-size: 9pt; }
+  @bottom-center {
+    content: counter(page) " · " var(--print-title, "班级作文报");
+    font-size: 9pt;
+  }
 }
 
-@media (min-width: 980px) {
+@media screen and (min-width: 980px) {
   .newspaper {
     width: 210mm;
     min-height: 297mm;
@@ -202,13 +561,52 @@ input, select {
 }
 
 @media print {
-  body { background: white; }
-  .app-header, .privacy-banner, .toolbar, .status, .print-actions { display: none; }
-  .shell { width: auto; margin: 0; }
-  .newspaper { column-count: 2; column-gap: 8mm; column-rule: .25pt solid #ddd; font-size: 9.8pt; line-height: 1.52; }
+  header.app-header,
+  .app-header,
+  nav,
+  button,
+  .toolbar,
+  .privacy-banner,
+  .status,
+  .settings-panel,
+  .review-summary,
+  .editor-list,
+  .app-shell {
+    display: none !important;
+  }
+
+  body {
+    background: white;
+  }
+
+  #publication-root {
+    display: block;
+  }
+
+  .publication--magazine,
+  .article-reader {
+    display: none;
+  }
+
+  .newspaper {
+    column-count: 2;
+    column-gap: 8mm;
+    column-rule: .25pt solid #ddd;
+    font-size: 9.8pt;
+    line-height: 1.52;
+  }
 }
 
 @media (max-width: 760px) {
-  .app-header, .editor-fields, .review-summary { grid-template-columns: 1fr; }
-  .app-header { display: grid; }
+  .app-header,
+  .editor-fields,
+  .settings-grid,
+  .review-summary {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .magazine-cover {
+    min-height: 68vh;
+  }
 }
