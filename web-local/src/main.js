@@ -33,9 +33,11 @@ function render() {
         <strong>本地处理：</strong> 所有 .docx 只在当前浏览器中读取。页面不会上传作文、图片或学生信息。
       </section>
       <section class="toolbar">
-        <label class="file-picker"><input id="docxInput" type="file" accept=".docx" multiple><span>选择 .docx</span></label>
+        <input id="docxInput" class="file-input" type="file" accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document" multiple>
+        <button id="chooseDocx" type="button">选择 .docx</button>
         <button id="exportJson" type="button">导出项目 JSON</button>
-        <label class="ghost-picker"><input id="importJson" type="file" accept="application/json,.json"><span>导入项目 JSON</span></label>
+        <input id="importJson" class="file-input" type="file" accept="application/json,.json">
+        <button id="chooseJson" class="ghost-button" type="button">导入项目 JSON</button>
         <button id="exportHtml" type="button">导出杂志 HTML</button>
         <button id="clearAll" type="button" class="danger">清空本机数据</button>
       </section>
@@ -63,11 +65,22 @@ function bindGlobalEvents() {
     });
   });
 
-  app.querySelector("#docxInput").addEventListener("change", async (event) => {
+  const docxInput = app.querySelector("#docxInput");
+  const jsonInput = app.querySelector("#importJson");
+
+  app.querySelector("#chooseDocx").addEventListener("click", () => {
+    docxInput.click();
+  });
+  app.querySelector("#chooseJson").addEventListener("click", () => {
+    jsonInput.click();
+  });
+
+  docxInput.addEventListener("change", async (event) => {
     await importDocxFiles([...event.target.files]);
+    event.target.value = "";
   });
   app.querySelector("#exportJson").addEventListener("click", exportJson);
-  app.querySelector("#importJson").addEventListener("change", importJson);
+  jsonInput.addEventListener("change", importJson);
   app.querySelector("#exportHtml").addEventListener("click", exportHtml);
   app.querySelector("#clearAll").addEventListener("click", clearAll);
 }
@@ -82,29 +95,41 @@ async function importDocxFiles(files) {
 
   setStatus(`正在本地解析 ${docxFiles.length} 个 .docx...`);
   const imported = [];
+  const failed = [];
   for (const file of docxFiles) {
-    const result = await mammoth.convertToHtml({ arrayBuffer: await file.arrayBuffer() });
-    const article = extractArticle(result.value, file.name);
-    imported.push({
-      id: stableId(`${file.name}:${file.size}:${file.lastModified}`),
-      sourceFile: file.name,
-      title: article.title,
-      author: article.author,
-      column: "佳作欣赏",
-      html: article.html,
-      images: article.images,
-      selected: false,
-      anonymous: false,
-      privacyReview: false,
-      updatedAt: new Date().toISOString()
-    });
+    try {
+      updateStatusOnly(`正在解析：${file.name}`);
+      const result = await mammoth.convertToHtml({ arrayBuffer: await file.arrayBuffer() });
+      const article = extractArticle(result.value, file.name);
+      imported.push({
+        id: stableId(`${file.name}:${file.size}:${file.lastModified}`),
+        sourceFile: file.name,
+        title: article.title,
+        author: article.author,
+        column: "佳作欣赏",
+        html: article.html,
+        images: article.images,
+        selected: false,
+        anonymous: false,
+        privacyReview: false,
+        updatedAt: new Date().toISOString()
+      });
+    } catch (error) {
+      failed.push(`${file.name}：${error.message}`);
+    }
   }
 
   const existing = new Map(state.articles.map((article) => [article.id, article]));
   for (const article of imported) existing.set(article.id, { ...existing.get(article.id), ...article });
   state.articles = [...existing.values()];
   persist();
-  setStatus(`已导入 ${imported.length} 篇作文${skipped.length ? `；跳过 ${skipped.length} 个非 .docx 文件` : ""}。默认不会发布，请逐篇勾选入选和隐私已审查。`);
+  const notes = [
+    `已导入 ${imported.length} 篇作文`,
+    skipped.length ? `跳过 ${skipped.length} 个非 .docx 文件` : "",
+    failed.length ? `失败 ${failed.length} 个：${failed.join("；")}` : "",
+    "默认不会发布，请逐篇勾选入选和隐私已审查。"
+  ].filter(Boolean);
+  setStatus(notes.join("。"));
 }
 
 function extractArticle(html, fileName) {
@@ -269,10 +294,16 @@ function exportJson() {
 async function importJson(event) {
   const file = event.target.files[0];
   if (!file) return;
-  const data = JSON.parse(await file.text());
-  state.articles = Array.isArray(data) ? data : data.articles ?? [];
-  persist();
-  setStatus(`已导入项目 JSON：${state.articles.length} 篇。`);
+  try {
+    const data = JSON.parse(await file.text());
+    state.articles = Array.isArray(data) ? data : data.articles ?? [];
+    persist();
+    setStatus(`已导入项目 JSON：${state.articles.length} 篇。`);
+  } catch (error) {
+    setStatus(`项目 JSON 导入失败：${error.message}`);
+  } finally {
+    event.target.value = "";
+  }
 }
 
 function exportHtml() {
