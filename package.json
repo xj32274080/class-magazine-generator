@@ -11,6 +11,7 @@
     "web:dev": "vite web-local --host 127.0.0.1 --port 5173",
     "web:build": "vite build web-local --outDir ../web-dist --emptyOutDir",
     "web:preview": "vite preview --outDir web-dist --host 127.0.0.1 --port 4173",
+    "test:smoke": "node scripts/smoke-web-local.mjs",
     "clean": "node scripts/clean.mjs"
   },
   "dependencies": {
