@@ -85,6 +85,12 @@ GitHub Pages：
 
 仓库已包含 `.github/workflows/pages.yml`。推送到 `main` 后，GitHub Actions 会构建 `web-local/` 并发布 `web-dist/`。首次使用时，需要在 GitHub 仓库 Settings → Pages 中把 Source 设置为 GitHub Actions。
 
+注意：GitHub Free 计划通常不支持私有仓库的 GitHub Pages。如果仓库保持 private，Pages 部署会在最后一步报 `Your current plan does not support GitHub Pages for this repository` 或 `Ensure GitHub Pages has been enabled`。可选方案：
+
+- 将本仓库设为 public 后启用 GitHub Pages。仓库已忽略真实作文、导入 JSON 和生成文件，公开的是工具源码。
+- 保持仓库 private，改用 Vercel / Netlify 部署静态站点。
+- 本地运行 `npm run web:build`，把 `web-dist/` 文件夹交给学校内网或其他静态网站服务器。
+
 ## 使用流程
 
 1. 把学生作文 `.docx` 放入 `input-docx/`。
