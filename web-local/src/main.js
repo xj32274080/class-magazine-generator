@@ -1,34 +1,63 @@
 import mammoth from "mammoth/mammoth.browser";
 import appCss from "./styles.css?raw";
 import "./styles.css";
+import {
+  DEFAULT_COLUMNS,
+  DEFAULT_PUBLICATION_SETTINGS,
+  buildExcerpt,
+  escapeAttr,
+  escapeHtml,
+  getPublishedArticles,
+  normalizeSettings,
+  renderMagazineView,
+  renderPrintNewspaperView,
+  renderStandaloneHtml,
+  stripHtml
+} from "./renderers.mjs";
 
-const COLUMNS = ["校园生活", "成长故事", "自然观察", "想象天地", "读后感", "佳作欣赏"];
-const STORAGE_KEY = "class-magazine-web-local-v1";
+const STORAGE_KEY = "class-magazine-web-local-v2";
+const LEGACY_STORAGE_KEY = "class-magazine-web-local-v1";
 
-const state = {
-  articles: loadArticles(),
-  activeView: "manage",
-  status: "选择 .docx 后，作文会在浏览器本地解析，不会上传。"
-};
-
+const state = loadProject();
 const app = document.querySelector("#app");
 
+syncDocumentTitle();
 render();
 
 function render() {
+  if (state.activeView === "magazine") {
+    renderPublication(renderMagazineView({
+      articles: state.articles,
+      settings: state.publicationSettings,
+      columns: state.columns,
+      activeArticleId: state.activeArticleId
+    }));
+    bindPublicationEvents();
+    return;
+  }
+
+  if (state.activeView === "print") {
+    renderPublication(renderPrintNewspaperView({
+      articles: state.articles,
+      settings: state.publicationSettings,
+      columns: state.columns
+    }));
+    return;
+  }
+
   app.innerHTML = `
     <header class="app-header">
       <div>
-        <p>Browser Local Edition</p>
-        <h1>班级作文杂志生成器</h1>
+        <p>本地整理学生作文，生成在线杂志与打印报纸</p>
+        <h1>班级作文报刊生成器</h1>
       </div>
       <nav aria-label="视图切换">
         ${navButton("manage", "管理")}
-        ${navButton("magazine", "杂志预览")}
-        ${navButton("print", "打印版")}
+        ${navButton("magazine", "在线杂志")}
+        ${navButton("print", "打印报纸")}
       </nav>
     </header>
-    <main class="shell">
+    <main class="app-shell">
       <section class="privacy-banner">
         <strong>本地处理：</strong> 所有 .docx 只在当前浏览器中读取。页面不会上传作文、图片或学生信息。
       </section>
@@ -42,14 +71,18 @@ function render() {
         <button id="clearAll" type="button" class="danger">清空本机数据</button>
       </section>
       <p class="status">${escapeHtml(state.status)}</p>
-      ${state.activeView === "manage" ? renderManage() : ""}
-      ${state.activeView === "magazine" ? renderMagazine() : ""}
-      ${state.activeView === "print" ? renderPrint() : ""}
+      ${renderSettingsPanel()}
+      ${renderManage()}
     </main>
   `;
 
-  bindGlobalEvents();
-  if (state.activeView === "manage") bindEditorEvents();
+  bindAppShellEvents();
+  bindSettingsEvents();
+  bindEditorEvents();
+}
+
+function renderPublication(content) {
+  app.innerHTML = `<div id="publication-root">${content}</div>`;
 }
 
 function navButton(view, label) {
@@ -57,32 +90,148 @@ function navButton(view, label) {
   return `<button data-view="${view}" type="button"${active}>${label}</button>`;
 }
 
-function bindGlobalEvents() {
+function renderSettingsPanel() {
+  const settings = state.publicationSettings;
+  return `
+    <section class="settings-panel">
+      <header>
+        <span>Publication Settings</span>
+        <h2>刊物设置</h2>
+      </header>
+      <div class="settings-grid">
+        ${textInput("magazineTitle", "刊物名称", settings.magazineTitle)}
+        ${textInput("magazineSubtitle", "英文小字或副标题", settings.magazineSubtitle)}
+        ${textInput("schoolName", "学校", settings.schoolName)}
+        ${textInput("className", "班级", settings.className)}
+        ${textInput("issueTheme", "本期主题", settings.issueTheme)}
+        ${textInput("issueNo", "期号", settings.issueNo)}
+        ${textInput("issueDate", "日期", settings.issueDate, "date")}
+        <label class="settings-wide">卷首语<textarea data-setting="editorNote" rows="4">${escapeHtml(settings.editorNote)}</textarea></label>
+        <label><span>是否显示真实姓名</span><select data-setting="showRealName">
+          <option value="true" ${settings.showRealName ? "selected" : ""}>显示</option>
+          <option value="false" ${!settings.showRealName ? "selected" : ""}>不显示</option>
+        </select></label>
+        <label><span>默认署名方式</span><select data-setting="authorDisplayMode">
+          <option value="realName" ${settings.authorDisplayMode === "realName" ? "selected" : ""}>真实姓名</option>
+          <option value="nickname" ${settings.authorDisplayMode === "nickname" ? "selected" : ""}>昵称</option>
+          <option value="anonymous" ${settings.authorDisplayMode === "anonymous" ? "selected" : ""}>匿名</option>
+        </select></label>
+      </div>
+    </section>
+  `;
+}
+
+function textInput(field, label, value, type = "text") {
+  return `<label><span>${label}</span><input data-setting="${field}" type="${type}" value="${escapeAttr(value)}"></label>`;
+}
+
+function renderManage() {
+  if (state.articles.length === 0) {
+    return `<section class="empty"><h2>还没有作文</h2><p>点击“选择 .docx”，一次选择多篇作文即可开始。</p></section>`;
+  }
+  return `
+    <section class="review-summary">
+      <div><strong>${state.articles.length}</strong><span>已导入</span></div>
+      <div><strong>${getPublishedArticles(state.articles).length}</strong><span>可发布</span></div>
+      <div><strong>${state.articles.filter((item) => item.anonymous).length}</strong><span>匿名</span></div>
+    </section>
+    <section class="editor-list">${state.articles.map(renderEditor).join("")}</section>
+  `;
+}
+
+function renderEditor(article, index) {
+  return `
+    <article class="editor-card" data-index="${index}">
+      <div class="editor-fields">
+        <label>标题<input data-field="title" value="${escapeAttr(article.title)}"></label>
+        <label>作者<input data-field="author" value="${escapeAttr(article.author)}"></label>
+        <label>显示署名<input data-field="displayAuthor" value="${escapeAttr(article.displayAuthor || "")}"></label>
+        <label>栏目<select data-field="column">${state.columns.map((column) => `<option value="${escapeAttr(column)}" ${article.column === column ? "selected" : ""}>${escapeHtml(column)}</option>`).join("")}</select></label>
+      </div>
+      <label class="excerpt-field">摘要<input data-field="excerpt" value="${escapeAttr(article.excerpt || buildExcerpt(article))}"></label>
+      <div class="checks">
+        <label><input data-field="selected" type="checkbox" ${article.selected ? "checked" : ""}> 入选</label>
+        <label><input data-field="anonymous" type="checkbox" ${article.anonymous ? "checked" : ""}> 匿名发布</label>
+        <label><input data-field="privacyReview" type="checkbox" ${article.privacyReview ? "checked" : ""}> 隐私已审查</label>
+      </div>
+      <details><summary>正文预览</summary><div class="essay-preview">${article.html}</div></details>
+    </article>
+  `;
+}
+
+function bindAppShellEvents() {
   app.querySelectorAll("[data-view]").forEach((button) => {
-    button.addEventListener("click", () => {
-      state.activeView = button.dataset.view;
-      render();
-    });
+    button.addEventListener("click", () => switchView(button.dataset.view));
   });
 
   const docxInput = app.querySelector("#docxInput");
   const jsonInput = app.querySelector("#importJson");
 
-  app.querySelector("#chooseDocx").addEventListener("click", () => {
-    docxInput.click();
-  });
-  app.querySelector("#chooseJson").addEventListener("click", () => {
-    jsonInput.click();
-  });
-
+  app.querySelector("#chooseDocx").addEventListener("click", () => docxInput.click());
+  app.querySelector("#chooseJson").addEventListener("click", () => jsonInput.click());
   docxInput.addEventListener("change", async (event) => {
     await importDocxFiles([...event.target.files]);
     event.target.value = "";
   });
-  app.querySelector("#exportJson").addEventListener("click", exportJson);
   jsonInput.addEventListener("change", importJson);
+  app.querySelector("#exportJson").addEventListener("click", exportJson);
   app.querySelector("#exportHtml").addEventListener("click", exportHtml);
   app.querySelector("#clearAll").addEventListener("click", clearAll);
+}
+
+function bindSettingsEvents() {
+  app.querySelectorAll("[data-setting]").forEach((input) => {
+    input.addEventListener("change", () => {
+      const field = input.dataset.setting;
+      state.publicationSettings[field] = field === "showRealName" ? input.value === "true" : input.value;
+      persist();
+      syncDocumentTitle();
+      updateStatusOnly("刊物设置已保存。");
+    });
+    input.addEventListener("input", () => {
+      const field = input.dataset.setting;
+      if (field === "showRealName") return;
+      state.publicationSettings[field] = input.value;
+      persist();
+      syncDocumentTitle();
+    });
+  });
+}
+
+function bindEditorEvents() {
+  app.querySelectorAll(".editor-card").forEach((card) => {
+    const article = state.articles[Number(card.dataset.index)];
+    card.querySelectorAll("[data-field]").forEach((input) => {
+      input.addEventListener("change", () => {
+        article[input.dataset.field] = input.type === "checkbox" ? input.checked : input.value;
+        article.updatedAt = new Date().toISOString();
+        persist();
+        updateStatusOnly("已保存到当前浏览器。");
+      });
+      input.addEventListener("input", () => {
+        if (input.type === "checkbox") return;
+        article[input.dataset.field] = input.value;
+        persist();
+      });
+    });
+  });
+}
+
+function bindPublicationEvents() {
+  app.querySelectorAll("[data-read-article]").forEach((link) => {
+    link.addEventListener("click", (event) => {
+      event.preventDefault();
+      state.activeArticleId = link.dataset.readArticle;
+      history.pushState({ view: "magazine", articleId: state.activeArticleId }, "", `#article-${state.activeArticleId}`);
+      render();
+    });
+  });
+  app.querySelectorAll("[data-view-link]").forEach((link) => {
+    link.addEventListener("click", (event) => {
+      event.preventDefault();
+      switchView(link.dataset.viewLink);
+    });
+  });
 }
 
 async function importDocxFiles(files) {
@@ -106,7 +255,9 @@ async function importDocxFiles(files) {
         sourceFile: file.name,
         title: article.title,
         author: article.author,
-        column: "佳作欣赏",
+        displayAuthor: article.author,
+        column: state.columns[0],
+        excerpt: stripHtml(article.html).slice(0, 80),
         html: article.html,
         images: article.images,
         selected: false,
@@ -120,16 +271,15 @@ async function importDocxFiles(files) {
   }
 
   const existing = new Map(state.articles.map((article) => [article.id, article]));
-  for (const article of imported) existing.set(article.id, { ...existing.get(article.id), ...article });
+  for (const article of imported) existing.set(article.id, normalizeArticle({ ...existing.get(article.id), ...article }));
   state.articles = [...existing.values()];
   persist();
-  const notes = [
+  setStatus([
     `已导入 ${imported.length} 篇作文`,
     skipped.length ? `跳过 ${skipped.length} 个非 .docx 文件` : "",
     failed.length ? `失败 ${failed.length} 个：${failed.join("；")}` : "",
     "默认不会发布，请逐篇勾选入选和隐私已审查。"
-  ].filter(Boolean);
-  setStatus(notes.join("。"));
+  ].filter(Boolean).join("。"));
 }
 
 function extractArticle(html, fileName) {
@@ -169,126 +319,12 @@ function extractArticle(html, fileName) {
   };
 }
 
-function renderManage() {
-  if (state.articles.length === 0) {
-    return `<section class="empty"><h2>还没有作文</h2><p>点击“选择 .docx”，一次选择多篇作文即可开始。</p></section>`;
-  }
-  return `
-    <section class="review-summary">
-      <div><strong>${state.articles.length}</strong><span>已导入</span></div>
-      <div><strong>${publishedArticles().length}</strong><span>可发布</span></div>
-      <div><strong>${state.articles.filter((item) => item.anonymous).length}</strong><span>匿名</span></div>
-    </section>
-    <section class="editor-list">${state.articles.map(renderEditor).join("")}</section>
-  `;
-}
-
-function renderEditor(article, index) {
-  return `
-    <article class="editor-card" data-index="${index}">
-      <div class="editor-fields">
-        <label>标题<input data-field="title" value="${escapeAttr(article.title)}"></label>
-        <label>作者<input data-field="author" value="${escapeAttr(article.author)}"></label>
-        <label>栏目<select data-field="column">${COLUMNS.map((column) => `<option value="${column}" ${article.column === column ? "selected" : ""}>${column}</option>`).join("")}</select></label>
-      </div>
-      <div class="checks">
-        <label><input data-field="selected" type="checkbox" ${article.selected ? "checked" : ""}> 入选</label>
-        <label><input data-field="anonymous" type="checkbox" ${article.anonymous ? "checked" : ""}> 匿名发布</label>
-        <label><input data-field="privacyReview" type="checkbox" ${article.privacyReview ? "checked" : ""}> 隐私已审查</label>
-      </div>
-      <details><summary>正文预览</summary><div class="essay-preview">${article.html}</div></details>
-    </article>
-  `;
-}
-
-function bindEditorEvents() {
-  app.querySelectorAll(".editor-card").forEach((card) => {
-    const article = state.articles[Number(card.dataset.index)];
-    card.querySelectorAll("[data-field]").forEach((input) => {
-      input.addEventListener("change", () => {
-        article[input.dataset.field] = input.type === "checkbox" ? input.checked : input.value;
-        article.updatedAt = new Date().toISOString();
-        persist();
-        updateStatusOnly("已保存到当前浏览器。");
-      });
-      input.addEventListener("input", () => {
-        if (input.type === "checkbox") return;
-        article[input.dataset.field] = input.value;
-        persist();
-      });
-    });
-  });
-}
-
-function renderMagazine() {
-  const articles = publishedArticles();
-  return `
-    <section class="cover"><div><p>老师审定版</p><h2>班级作文在线杂志</h2><span>${articles.length} 篇入选作品</span></div></section>
-    <section class="column-nav">${COLUMNS.filter((column) => articles.some((article) => article.column === column)).map((column) => `<a href="#${column}">${column}</a>`).join("")}</section>
-    ${articles.length === 0 ? "<section class=\"empty\"><h2>暂无可发布文章</h2><p>请先勾选“入选”和“隐私已审查”。</p></section>" : ""}
-    ${COLUMNS.map((column) => renderColumn(column, articles)).join("")}
-  `;
-}
-
-function renderColumn(column, articles) {
-  const items = articles.filter((article) => article.column === column);
-  if (items.length === 0) return "";
-  return `
-    <section class="mag-section" id="${column}">
-      <header><h2>${column}</h2><span>${items.length} 篇</span></header>
-      <div class="cards">
-        ${items.map((article) => `
-          <article class="mag-card">
-            ${article.images[0] ? `<img src="${article.images[0]}" alt="">` : ""}
-            <p>${displayAuthor(article)}</p>
-            <h3>${escapeHtml(article.title)}</h3>
-            <div class="excerpt">${escapeHtml(stripHtml(article.html).slice(0, 120))}...</div>
-          </article>
-        `).join("")}
-      </div>
-    </section>
-  `;
-}
-
-function renderPrint() {
-  const articles = publishedArticles();
-  return `
-    <section class="print-actions"><button type="button" onclick="window.print()">浏览器打印 / 另存 PDF</button></section>
-    <main class="newspaper">
-      <header class="masthead"><p>Class Writing Gazette</p><h1>班级作文报</h1><div>本地生成 · 已审查入选作品</div></header>
-      ${COLUMNS.map((column) => renderPrintColumn(column, articles)).join("")}
-    </main>
-  `;
-}
-
-function renderPrintColumn(column, articles) {
-  const items = articles.filter((article) => article.column === column);
-  if (items.length === 0) return "";
-  return `
-    <section class="print-section">
-      <h2><span>${column}</span></h2>
-      ${items.map((article) => `
-        <article class="print-article">
-          <h3>${escapeHtml(article.title)}</h3>
-          <p class="byline">${displayAuthor(article)}</p>
-          <div class="print-article__body">${article.html}</div>
-        </article>
-      `).join("")}
-    </section>
-  `;
-}
-
-function publishedArticles() {
-  return state.articles.filter((article) => article.selected && article.privacyReview);
-}
-
-function displayAuthor(article) {
-  if (article.anonymous) return "匿名";
-  return article.author || "未署名";
-}
-
-function exportJson() {
-  downloadFile("class-magazine-project.json", JSON.stringify({ articles: state.articles }, null, 2), "application/json");
+function switchView(view) {
+  state.activeView = view;
+  state.activeArticleId = "";
+  history.pushState({ view }, "", view === "manage" ? "#" : `#${view}`);
+  syncDocumentTitle();
+  render();
 }
 
 async function importJson(event) {
@@ -296,8 +332,12 @@ async function importJson(event) {
   if (!file) return;
   try {
     const data = JSON.parse(await file.text());
-    state.articles = Array.isArray(data) ? data : data.articles ?? [];
+    const project = normalizeProject(data);
+    state.articles = project.articles;
+    state.columns = project.columns;
+    state.publicationSettings = project.publicationSettings;
     persist();
+    syncDocumentTitle();
     setStatus(`已导入项目 JSON：${state.articles.length} 篇。`);
   } catch (error) {
     setStatus(`项目 JSON 导入失败：${error.message}`);
@@ -306,15 +346,29 @@ async function importJson(event) {
   }
 }
 
+function exportJson() {
+  downloadFile(`${fileSafeName(state.publicationSettings.magazineTitle)}-project.json`, JSON.stringify(projectSnapshot(), null, 2), "application/json");
+}
+
 function exportHtml() {
-  const html = `<!doctype html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>班级作文在线杂志</title><style>${appCss}</style></head><body>${renderMagazine()}${renderPrint()}</body></html>`;
-  downloadFile("class-magazine.html", html, "text/html");
+  downloadFile(`${fileSafeName(state.publicationSettings.magazineTitle)}.html`, renderStandaloneHtml({
+    articles: state.articles,
+    settings: state.publicationSettings,
+    columns: state.columns,
+    css: appCss
+  }), "text/html");
 }
 
 function clearAll() {
-  if (!confirm("确定清空当前浏览器里的作文数据吗？这不会删除你电脑上的 docx 文件。")) return;
-  state.articles = [];
+  if (!confirm("确定清空当前浏览器里的作文数据和刊物设置吗？这不会删除你电脑上的 docx 文件。")) return;
+  const fresh = normalizeProject({});
+  state.articles = fresh.articles;
+  state.columns = fresh.columns;
+  state.publicationSettings = fresh.publicationSettings;
+  state.activeView = "manage";
+  state.activeArticleId = "";
   persist();
+  syncDocumentTitle();
   setStatus("已清空当前浏览器保存的数据。");
 }
 
@@ -329,15 +383,57 @@ function downloadFile(fileName, content, type) {
 }
 
 function persist() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state.articles));
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(projectSnapshot()));
 }
 
-function loadArticles() {
+function projectSnapshot() {
+  return {
+    publicationSettings: state.publicationSettings,
+    columns: state.columns,
+    articles: state.articles
+  };
+}
+
+function loadProject() {
   try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "[]");
+    const current = localStorage.getItem(STORAGE_KEY);
+    if (current) return { ...normalizeProject(JSON.parse(current)), activeView: viewFromHash(), activeArticleId: articleFromHash(), status: "项目已从当前浏览器恢复。" };
+    const legacy = localStorage.getItem(LEGACY_STORAGE_KEY);
+    if (legacy) return { ...normalizeProject({ articles: JSON.parse(legacy) }), activeView: viewFromHash(), activeArticleId: articleFromHash(), status: "已从旧版浏览器数据迁移。" };
   } catch {
-    return [];
+    // Ignore corrupted local data and start fresh.
   }
+  return { ...normalizeProject({}), activeView: viewFromHash(), activeArticleId: articleFromHash(), status: "选择 .docx 后，作文会在浏览器本地解析，不会上传。" };
+}
+
+function normalizeProject(project) {
+  return {
+    publicationSettings: normalizeSettings(project.publicationSettings),
+    columns: Array.isArray(project.columns) && project.columns.length ? project.columns : DEFAULT_COLUMNS,
+    articles: Array.isArray(project.articles) ? project.articles.map(normalizeArticle) : []
+  };
+}
+
+function normalizeArticle(article) {
+  return {
+    id: article.id || stableId(`${article.title}:${article.author}:${article.sourceFile || ""}`),
+    sourceFile: article.sourceFile || "",
+    title: article.title || "未命名作文",
+    author: article.author || "",
+    displayAuthor: article.displayAuthor || article.author || "",
+    column: article.column || DEFAULT_COLUMNS[0],
+    excerpt: article.excerpt || stripHtml(article.html).slice(0, 80),
+    html: article.html || "",
+    images: Array.isArray(article.images) ? article.images : [],
+    selected: Boolean(article.selected),
+    anonymous: Boolean(article.anonymous),
+    privacyReview: Boolean(article.privacyReview),
+    updatedAt: article.updatedAt || new Date().toISOString()
+  };
+}
+
+function syncDocumentTitle() {
+  document.title = state.activeView === "manage" ? `管理 - ${state.publicationSettings.magazineTitle}` : state.publicationSettings.magazineTitle;
 }
 
 function setStatus(message) {
@@ -351,6 +447,23 @@ function updateStatusOnly(message) {
   if (status) status.textContent = message;
 }
 
+function viewFromHash() {
+  if (location.hash.startsWith("#print")) return "print";
+  if (location.hash.startsWith("#magazine") || location.hash.startsWith("#article-")) return "magazine";
+  return "manage";
+}
+
+function articleFromHash() {
+  return location.hash.startsWith("#article-") ? location.hash.replace("#article-", "") : "";
+}
+
+window.addEventListener("popstate", () => {
+  state.activeView = viewFromHash();
+  state.activeArticleId = articleFromHash();
+  syncDocumentTitle();
+  render();
+});
+
 function stableId(value) {
   let hash = 0;
   for (let i = 0; i < value.length; i += 1) hash = Math.imul(31, hash) + value.charCodeAt(i) | 0;
@@ -361,15 +474,6 @@ function compactText(value) {
   return String(value ?? "").replace(/\s+/g, " ").trim();
 }
 
-function stripHtml(html) {
-  const document = new DOMParser().parseFromString(html, "text/html");
-  return compactText(document.body.textContent);
-}
-
-function escapeHtml(value) {
-  return String(value ?? "").replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
-}
-
-function escapeAttr(value) {
-  return escapeHtml(value).replaceAll("\"", "&quot;");
+function fileSafeName(value) {
+  return String(value || "class-magazine").replace(/[\\/:*?"<>|]+/g, "-").trim() || "class-magazine";
 }
