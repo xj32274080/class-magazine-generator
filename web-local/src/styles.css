@@ -439,6 +439,36 @@ textarea {
   max-width: 100%;
 }
 
+.print-export-bar {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 12px clamp(16px, 4vw, 32px);
+  border-bottom: 1px solid var(--line);
+  background: rgba(255, 253, 248, .97);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.print-export-bar > div {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.print-export-bar span {
+  color: var(--muted);
+  font-size: .9rem;
+}
+
+.print-preview-scroll {
+  padding: 24px 0 72px;
+}
+
 .newspaper {
   background: white;
   color: #111;
@@ -548,7 +578,6 @@ textarea {
 @media screen and (min-width: 980px) {
   .newspaper {
     width: 210mm;
-    min-height: 297mm;
     margin: 24px auto;
     padding: 16mm 14mm;
     column-count: 2;
@@ -568,6 +597,7 @@ textarea {
   .toolbar,
   .privacy-banner,
   .status,
+  .print-export-bar,
   .settings-panel,
   .review-summary,
   .editor-list,
@@ -594,6 +624,10 @@ textarea {
     column-rule: .25pt solid #ddd;
     font-size: 9.8pt;
     line-height: 1.52;
+    width: auto;
+    margin: 0;
+    padding: 0;
+    box-shadow: none;
   }
 }
 
