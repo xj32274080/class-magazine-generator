@@ -37,11 +37,12 @@ function render() {
   }
 
   if (state.activeView === "print") {
-    renderPublication(renderPrintNewspaperView({
+    renderPublication(renderPrintExportPage(renderPrintNewspaperView({
       articles: state.articles,
       settings: state.publicationSettings,
       columns: state.columns
-    }));
+    })));
+    bindPrintPageEvents();
     return;
   }
 
@@ -83,6 +84,24 @@ function render() {
 
 function renderPublication(content) {
   app.innerHTML = `<div id="publication-root">${content}</div>`;
+}
+
+function renderPrintExportPage(newspaperHtml) {
+  return `
+    <div class="print-export-bar" aria-label="打印导出操作">
+      <div>
+        <strong>${escapeHtml(state.publicationSettings.magazineTitle)}</strong>
+        <span>Chrome 打印预览会自动分页，目标打印机选择“另存为 PDF”。</span>
+      </div>
+      <div>
+        <button id="backToManage" class="ghost-button" type="button">返回管理</button>
+        <button id="exportPdf" type="button">导出为 PDF</button>
+      </div>
+    </div>
+    <div class="print-preview-scroll">
+      ${newspaperHtml}
+    </div>
+  `;
 }
 
 function navButton(view, label) {
@@ -232,6 +251,13 @@ function bindPublicationEvents() {
       switchView(link.dataset.viewLink);
     });
   });
+}
+
+function bindPrintPageEvents() {
+  const exportButton = app.querySelector("#exportPdf");
+  const backButton = app.querySelector("#backToManage");
+  exportButton?.addEventListener("click", () => window.print());
+  backButton?.addEventListener("click", () => switchView("manage"));
 }
 
 async function importDocxFiles(files) {
