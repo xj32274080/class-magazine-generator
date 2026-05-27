@@ -10,7 +10,10 @@ export const DEFAULT_PUBLICATION_SETTINGS = {
   issueDate: "",
   editorNote: "",
   showRealName: true,
-  authorDisplayMode: "realName"
+  authorDisplayMode: "realName",
+  printFontSizePt: 11,
+  printFontFamily: "serif",
+  printColumnCount: 2
 };
 
 export function normalizeSettings(settings = {}) {
@@ -21,7 +24,7 @@ export function normalizeSettings(settings = {}) {
 }
 
 export function getPublishedArticles(articles = []) {
-  return articles.filter((article) => article.selected && article.privacyReview);
+  return articles.filter((article) => article.selected);
 }
 
 export function getDisplayAuthor(article, settings) {
@@ -58,7 +61,7 @@ export function renderMagazineView({ articles, settings, columns, activeArticleI
         ${columnsWithArticles(columns, published).map((column) => `<a href="#${escapeAttr(column)}">${escapeHtml(column)}</a>`).join("")}
       </nav>
 
-      ${published.length === 0 ? `<section class="publication-empty"><h2>暂无入选作品</h2><p>请回到管理端勾选“入选”和“隐私已审查”。</p></section>` : ""}
+      ${published.length === 0 ? `<section class="publication-empty"><h2>暂无入选作品</h2><p>请回到管理端勾选“入选”。</p></section>` : ""}
       ${columns.map((column) => renderMagazineColumn(column, published, settings)).join("")}
     </main>
   `;
@@ -69,7 +72,7 @@ export function renderPrintNewspaperView({ articles, settings, columns }) {
   const meta = [settings.schoolName, settings.className, settings.issueDate, settings.issueNo].filter(Boolean).join(" · ");
 
   return `
-    <main class="publication newspaper" data-print-container style="--print-title: '${escapeAttr(settings.magazineTitle)}'">
+    <main class="publication newspaper" data-print-container style="${printStyleVars(settings)}">
       <header class="newspaper-masthead">
         <p>${escapeHtml(settings.magazineSubtitle || "CLASS WRITING GAZETTE")}</p>
         <h1>${escapeHtml(settings.magazineTitle)}</h1>
@@ -80,6 +83,24 @@ export function renderPrintNewspaperView({ articles, settings, columns }) {
       ${columns.map((column) => renderPrintColumn(column, published, settings)).join("")}
     </main>
   `;
+}
+
+function printStyleVars(settings) {
+  const size = Number(settings.printFontSizePt) || DEFAULT_PUBLICATION_SETTINGS.printFontSizePt;
+  const columns = Number(settings.printColumnCount) || DEFAULT_PUBLICATION_SETTINGS.printColumnCount;
+  const family = fontFamilyValue(settings.printFontFamily);
+  return [
+    `--print-title: '${escapeAttr(settings.magazineTitle)}'`,
+    `--print-body-size: ${Math.min(18, Math.max(8, size))}pt`,
+    `--print-column-count: ${Math.min(3, Math.max(1, columns))}`,
+    `--print-font-family: ${family}`
+  ].join("; ");
+}
+
+function fontFamilyValue(value) {
+  if (value === "sans") return `"Microsoft YaHei", system-ui, sans-serif`;
+  if (value === "kai") return `KaiTi, "STKaiti", "楷体", serif`;
+  return `"Noto Serif SC", "Songti SC", SimSun, serif`;
 }
 
 export function renderStandaloneHtml({ articles, settings, columns, css }) {
