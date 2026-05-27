@@ -13,7 +13,10 @@ const html = renderPrintNewspaperView({
     className: "四年级一班",
     issueTheme: "观察与想象专刊",
     issueNo: "第 1 期",
-    issueDate: "2026-05-24"
+    issueDate: "2026-05-24",
+    printFontSizePt: 16,
+    printFontFamily: "kai",
+    printColumnCount: 1
   }),
   columns: DEFAULT_COLUMNS,
   articles: [
@@ -25,7 +28,6 @@ const html = renderPrintNewspaperView({
       column: DEFAULT_COLUMNS[0],
       html: "<p>春天来了，校园里的树叶变绿了。</p>",
       selected: true,
-      privacyReview: true,
       anonymous: false
     }
   ]
@@ -39,5 +41,7 @@ assert.doesNotMatch(html, /杂志预览/);
 assert.doesNotMatch(html, /打印版/);
 assert.match(html, /data-print-container/);
 assert.doesNotMatch(html, /导出为 PDF/);
+assert.match(html, /--print-body-size: 16pt/);
+assert.match(html, /--print-column-count: 1/);
 
 console.log("web-local smoke test passed");
