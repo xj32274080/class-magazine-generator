@@ -1,4 +1,5 @@
 import mammoth from "mammoth/mammoth.browser";
+import { toPng } from "html-to-image";
 import appCss from "./styles.css?raw";
 import "./styles.css";
 import {
@@ -91,10 +92,11 @@ function renderPrintExportPage(newspaperHtml) {
     <div class="print-export-bar" aria-label="打印导出操作">
       <div>
         <strong>${escapeHtml(state.publicationSettings.magazineTitle)}</strong>
-        <span>Chrome 打印预览会自动分页，目标打印机选择“另存为 PDF”。</span>
+        <span>PDF 适合打印，长图适合发到群里预览。</span>
       </div>
       <div>
         <button id="backToManage" class="ghost-button" type="button">返回管理</button>
+        <button id="exportLongImage" class="ghost-button" type="button">导出为长图</button>
         <button id="exportPdf" type="button">导出为 PDF</button>
       </div>
     </div>
@@ -255,8 +257,10 @@ function bindPublicationEvents() {
 
 function bindPrintPageEvents() {
   const exportButton = app.querySelector("#exportPdf");
+  const imageButton = app.querySelector("#exportLongImage");
   const backButton = app.querySelector("#backToManage");
   exportButton?.addEventListener("click", () => window.print());
+  imageButton?.addEventListener("click", exportLongImage);
   backButton?.addEventListener("click", () => switchView("manage"));
 }
 
@@ -401,11 +405,49 @@ function clearAll() {
 function downloadFile(fileName, content, type) {
   const blob = new Blob([content], { type });
   const url = URL.createObjectURL(blob);
+  downloadUrl(fileName, url);
+  URL.revokeObjectURL(url);
+}
+
+function downloadUrl(fileName, url) {
   const link = document.createElement("a");
   link.href = url;
   link.download = fileName;
   link.click();
-  URL.revokeObjectURL(url);
+}
+
+async function exportLongImage() {
+  const node = app.querySelector("[data-print-container]");
+  const button = app.querySelector("#exportLongImage");
+  if (!node) return;
+
+  const originalText = button?.textContent;
+  if (button) {
+    button.disabled = true;
+    button.textContent = "正在生成长图...";
+  }
+
+  try {
+    const dataUrl = await toPng(node, {
+      cacheBust: true,
+      pixelRatio: 2,
+      backgroundColor: "#ffffff",
+      width: node.scrollWidth,
+      height: node.scrollHeight,
+      style: {
+        margin: "0",
+        boxShadow: "none"
+      }
+    });
+    downloadUrl(`${fileSafeName(state.publicationSettings.magazineTitle)}-长图.png`, dataUrl);
+  } catch (error) {
+    alert(`长图导出失败：${error.message || error}`);
+  } finally {
+    if (button) {
+      button.disabled = false;
+      button.textContent = originalText;
+    }
+  }
 }
 
 function persist() {
