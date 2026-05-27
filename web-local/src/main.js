@@ -147,6 +147,7 @@ function renderSettingsPanel() {
         ${textInput("issueNo", "期号", settings.issueNo)}
         ${textInput("issueDate", "日期", settings.issueDate, "date")}
         <label class="settings-wide">卷首语<textarea data-setting="editorNote" rows="4">${escapeHtml(settings.editorNote)}</textarea></label>
+        <label class="settings-wide">栏目设置<span class="field-hint">一行一个栏目，文章编辑里的栏目下拉会同步更新。</span><textarea data-columns rows="4">${escapeHtml(state.columns.join("\n"))}</textarea></label>
         <label><span>是否显示真实姓名</span><select data-setting="showRealName">
           <option value="true" ${settings.showRealName ? "selected" : ""}>显示</option>
           <option value="false" ${!settings.showRealName ? "selected" : ""}>不显示</option>
@@ -191,13 +192,14 @@ function renderManage() {
 }
 
 function renderEditor(article, index) {
+  const articleColumns = state.columns.includes(article.column) ? state.columns : [...state.columns, article.column].filter(Boolean);
   return `
     <article class="editor-card" data-index="${index}">
       <div class="editor-fields">
         <label>标题<input data-field="title" value="${escapeAttr(article.title)}"></label>
         <label>作者<input data-field="author" value="${escapeAttr(article.author)}"></label>
         <label>显示署名<input data-field="displayAuthor" value="${escapeAttr(article.displayAuthor || "")}"></label>
-        <label>栏目<select data-field="column">${state.columns.map((column) => `<option value="${escapeAttr(column)}" ${article.column === column ? "selected" : ""}>${escapeHtml(column)}</option>`).join("")}</select></label>
+        <label>栏目<select data-field="column">${articleColumns.map((column) => `<option value="${escapeAttr(column)}" ${article.column === column ? "selected" : ""}>${escapeHtml(column)}</option>`).join("")}</select></label>
       </div>
       <label class="excerpt-field">摘要<input data-field="excerpt" value="${escapeAttr(article.excerpt || buildExcerpt(article))}"></label>
       <div class="checks">
@@ -245,6 +247,11 @@ function bindSettingsEvents() {
       persist();
       syncDocumentTitle();
     });
+  });
+  const columnsInput = app.querySelector("[data-columns]");
+  columnsInput?.addEventListener("change", () => {
+    updateColumns(columnsInput.value);
+    setStatus("栏目设置已保存。");
   });
 }
 
@@ -509,21 +516,22 @@ function loadProject() {
 }
 
 function normalizeProject(project) {
+  const columns = normalizeColumns(project.columns);
   return {
     publicationSettings: normalizeSettings(project.publicationSettings),
-    columns: Array.isArray(project.columns) && project.columns.length ? project.columns : DEFAULT_COLUMNS,
-    articles: Array.isArray(project.articles) ? project.articles.map(normalizeArticle) : []
+    columns,
+    articles: Array.isArray(project.articles) ? project.articles.map((article) => normalizeArticle(article, columns)) : []
   };
 }
 
-function normalizeArticle(article) {
+function normalizeArticle(article, columns = DEFAULT_COLUMNS) {
   return {
     id: article.id || stableId(`${article.title}:${article.author}:${article.sourceFile || ""}`),
     sourceFile: article.sourceFile || "",
     title: article.title || "未命名作文",
     author: article.author || "",
     displayAuthor: article.displayAuthor || article.author || "",
-    column: article.column || DEFAULT_COLUMNS[0],
+    column: article.column || columns[0] || DEFAULT_COLUMNS[0],
     excerpt: article.excerpt || stripHtml(article.html).slice(0, 80),
     html: article.html || "",
     images: Array.isArray(article.images) ? article.images : [],
@@ -537,6 +545,31 @@ function updatePrintSetting(field, value) {
   state.publicationSettings[field] = numericSettingValue(field, value);
   persist();
   render();
+}
+
+function updateColumns(value) {
+  const nextColumns = normalizeColumns(value.split(/\r?\n/));
+  const previousColumns = state.columns;
+  const fallback = nextColumns[0] || DEFAULT_COLUMNS[0];
+  state.columns = nextColumns;
+  state.articles = state.articles.map((article) => ({
+    ...article,
+    column: nextColumns.includes(article.column) ? article.column : fallback
+  }));
+  if (previousColumns.join("\n") !== nextColumns.join("\n")) persist();
+}
+
+function normalizeColumns(columns) {
+  const source = Array.isArray(columns) ? columns : DEFAULT_COLUMNS;
+  const seen = new Set();
+  const normalized = [];
+  for (const column of source) {
+    const value = String(column ?? "").trim();
+    if (!value || seen.has(value)) continue;
+    seen.add(value);
+    normalized.push(value);
+  }
+  return normalized.length ? normalized : DEFAULT_COLUMNS;
 }
 
 function numericSettingValue(field, value) {
