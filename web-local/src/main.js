@@ -94,6 +94,25 @@ function renderPrintExportPage(newspaperHtml) {
         <strong>${escapeHtml(state.publicationSettings.magazineTitle)}</strong>
         <span>PDF 适合打印，长图适合发到群里预览。</span>
       </div>
+      <div class="print-quick-controls">
+        <label>字号
+          <select id="quickPrintFontSize">
+            ${[9, 10, 11, 12, 14, 16, 18].map((size) => `<option value="${size}" ${Number(state.publicationSettings.printFontSizePt) === size ? "selected" : ""}>${size}pt</option>`).join("")}
+          </select>
+        </label>
+        <label>字体
+          <select id="quickPrintFontFamily">
+            <option value="serif" ${state.publicationSettings.printFontFamily === "serif" ? "selected" : ""}>宋体/衬线</option>
+            <option value="kai" ${state.publicationSettings.printFontFamily === "kai" ? "selected" : ""}>楷体</option>
+            <option value="sans" ${state.publicationSettings.printFontFamily === "sans" ? "selected" : ""}>黑体/无衬线</option>
+          </select>
+        </label>
+        <label>分栏
+          <select id="quickPrintColumnCount">
+            ${[1, 2, 3].map((count) => `<option value="${count}" ${Number(state.publicationSettings.printColumnCount) === count ? "selected" : ""}>${count}栏</option>`).join("")}
+          </select>
+        </label>
+      </div>
       <div>
         <button id="backToManage" class="ghost-button" type="button">返回管理</button>
         <button id="exportLongImage" class="ghost-button" type="button">导出为长图</button>
@@ -137,6 +156,17 @@ function renderSettingsPanel() {
           <option value="nickname" ${settings.authorDisplayMode === "nickname" ? "selected" : ""}>昵称</option>
           <option value="anonymous" ${settings.authorDisplayMode === "anonymous" ? "selected" : ""}>匿名</option>
         </select></label>
+        <label><span>打印正文字号</span><select data-setting="printFontSizePt">
+          ${[9, 10, 11, 12, 14, 16, 18].map((size) => `<option value="${size}" ${Number(settings.printFontSizePt) === size ? "selected" : ""}>${size}pt</option>`).join("")}
+        </select></label>
+        <label><span>打印字体</span><select data-setting="printFontFamily">
+          <option value="serif" ${settings.printFontFamily === "serif" ? "selected" : ""}>宋体/衬线</option>
+          <option value="kai" ${settings.printFontFamily === "kai" ? "selected" : ""}>楷体</option>
+          <option value="sans" ${settings.printFontFamily === "sans" ? "selected" : ""}>黑体/无衬线</option>
+        </select></label>
+        <label><span>打印分栏</span><select data-setting="printColumnCount">
+          ${[1, 2, 3].map((count) => `<option value="${count}" ${Number(settings.printColumnCount) === count ? "selected" : ""}>${count}栏</option>`).join("")}
+        </select></label>
       </div>
     </section>
   `;
@@ -173,7 +203,6 @@ function renderEditor(article, index) {
       <div class="checks">
         <label><input data-field="selected" type="checkbox" ${article.selected ? "checked" : ""}> 入选</label>
         <label><input data-field="anonymous" type="checkbox" ${article.anonymous ? "checked" : ""}> 匿名发布</label>
-        <label><input data-field="privacyReview" type="checkbox" ${article.privacyReview ? "checked" : ""}> 隐私已审查</label>
       </div>
       <details><summary>正文预览</summary><div class="essay-preview">${article.html}</div></details>
     </article>
@@ -204,7 +233,7 @@ function bindSettingsEvents() {
   app.querySelectorAll("[data-setting]").forEach((input) => {
     input.addEventListener("change", () => {
       const field = input.dataset.setting;
-      state.publicationSettings[field] = field === "showRealName" ? input.value === "true" : input.value;
+      state.publicationSettings[field] = field === "showRealName" ? input.value === "true" : numericSettingValue(field, input.value);
       persist();
       syncDocumentTitle();
       updateStatusOnly("刊物设置已保存。");
@@ -212,7 +241,7 @@ function bindSettingsEvents() {
     input.addEventListener("input", () => {
       const field = input.dataset.setting;
       if (field === "showRealName") return;
-      state.publicationSettings[field] = input.value;
+      state.publicationSettings[field] = numericSettingValue(field, input.value);
       persist();
       syncDocumentTitle();
     });
@@ -259,9 +288,15 @@ function bindPrintPageEvents() {
   const exportButton = app.querySelector("#exportPdf");
   const imageButton = app.querySelector("#exportLongImage");
   const backButton = app.querySelector("#backToManage");
+  const fontSize = app.querySelector("#quickPrintFontSize");
+  const fontFamily = app.querySelector("#quickPrintFontFamily");
+  const columnCount = app.querySelector("#quickPrintColumnCount");
   exportButton?.addEventListener("click", () => window.print());
   imageButton?.addEventListener("click", exportLongImage);
   backButton?.addEventListener("click", () => switchView("manage"));
+  fontSize?.addEventListener("change", () => updatePrintSetting("printFontSizePt", fontSize.value));
+  fontFamily?.addEventListener("change", () => updatePrintSetting("printFontFamily", fontFamily.value));
+  columnCount?.addEventListener("change", () => updatePrintSetting("printColumnCount", columnCount.value));
 }
 
 async function importDocxFiles(files) {
@@ -292,7 +327,6 @@ async function importDocxFiles(files) {
         images: article.images,
         selected: false,
         anonymous: false,
-        privacyReview: false,
         updatedAt: new Date().toISOString()
       });
     } catch (error) {
@@ -308,7 +342,7 @@ async function importDocxFiles(files) {
     `已导入 ${imported.length} 篇作文`,
     skipped.length ? `跳过 ${skipped.length} 个非 .docx 文件` : "",
     failed.length ? `失败 ${failed.length} 个：${failed.join("；")}` : "",
-    "默认不会发布，请逐篇勾选入选和隐私已审查。"
+    "默认不会发布，请逐篇勾选入选。"
   ].filter(Boolean).join("。"));
 }
 
@@ -495,9 +529,19 @@ function normalizeArticle(article) {
     images: Array.isArray(article.images) ? article.images : [],
     selected: Boolean(article.selected),
     anonymous: Boolean(article.anonymous),
-    privacyReview: Boolean(article.privacyReview),
     updatedAt: article.updatedAt || new Date().toISOString()
   };
+}
+
+function updatePrintSetting(field, value) {
+  state.publicationSettings[field] = numericSettingValue(field, value);
+  persist();
+  render();
+}
+
+function numericSettingValue(field, value) {
+  if (field === "printFontSizePt" || field === "printColumnCount") return Number(value);
+  return value;
 }
 
 function syncDocumentTitle() {
