@@ -201,6 +201,11 @@ label {
   font-size: .88rem;
 }
 
+.field-hint {
+  color: var(--muted);
+  font-size: .8rem;
+}
+
 input,
 select,
 textarea {
@@ -497,12 +502,6 @@ textarea {
   padding-bottom: 9pt;
 }
 
-.newspaper-masthead p,
-.newspaper-masthead div,
-.byline {
-  font-family: "Microsoft YaHei", system-ui, sans-serif;
-}
-
 .newspaper-masthead p {
   margin: 0;
   font-size: 8pt;
@@ -565,7 +564,8 @@ textarea {
 .print-article .byline {
   break-after: avoid;
   color: #555;
-  font-size: 8.5pt;
+  font-family: inherit;
+  font-size: .92em;
   line-height: 1.35;
 }
 
